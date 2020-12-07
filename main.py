@@ -1,8 +1,7 @@
 import json
 from flask import Flask
-from threading import Thread
-
-from bank.bank import BankAPI
+from scan_thread import ScanThread
+from bank.bank import bank_api
 from violas_client import Client
 
 def set_default(obj):
@@ -12,31 +11,15 @@ def set_default(obj):
         return obj.__dict__
 
 app = Flask(__name__)
-
-api = BankAPI()
-
-start = 0
+scan_thread = ScanThread()
 
 @app.route('/')
 def index():
-    ret = json.dumps(api, default=set_default)
-    ret = json.loads(ret)
-    ret["height"] = start
-    return ret
+    return scan_thread.to_json()
 
-def scan_thread():
-    global start
-    client = Client()
-    while True:
-        txs = client.get_transactions(start, 500)
-        for tx in txs:
-            api.add_tx(tx)
-        start += 500
 
-thread = Thread(target=scan_thread)
-
-thread.setDaemon(True)
-thread.start()
+scan_thread.setDaemon(True)
+scan_thread.start()
 app.run(host="0.0.0.0", port=9000)
 
 

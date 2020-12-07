@@ -1,5 +1,5 @@
 import psycopg2
-from .const import dsn
+from db.const import dsn
 
 class Base():
     def __init__(self):
@@ -16,9 +16,12 @@ class Base():
         conn.close()
 
     def query(self, cmd):
-        conn = psycopg2.connect(self.dsn)
-        cursor = conn.cursor()
-        cursor.execute(cmd)
-        result = cursor.fetchall()
-        conn.close()
-        return result
+        try:
+            conn = psycopg2.connect(self.dsn)
+            cursor = conn.cursor()
+            cursor.execute(cmd)
+            result = cursor.fetchall()
+            conn.close()
+            return result
+        except psycopg2.errors.UndefinedColumn as e:
+            return None

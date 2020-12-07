@@ -1,14 +1,14 @@
-from bank.base import Base
+from db.base import Base
 
 create_table_sql = '''
-    CREATE TABLE IF NOT EXISTS bank_monitor(
+    CREATE TABLE IF NOT EXISTS monitor(
         key VARCHAR NOT NULL PRIMARY KEY,
         value jsonb
     );
 '''
 
 drop_table_sql = '''
-    DROP TABLE bank_monitor
+    DROP TABLE monitor
 '''
 
 def create_table():

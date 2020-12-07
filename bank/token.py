@@ -167,9 +167,7 @@ class TokenInfo():
         tx_time = tx.get_expiration_time()
         self.interval_borrow.reduce_records(amount, tx_time)
 
-        self.interval_lock_interest.add_repay_borrow(amount, tx_time)
-
-    def add_liquidate_borrow(self, tx):
+    def add_liquidae_borrow(self, tx):
         self.add_repay_borrow(tx)
 
 

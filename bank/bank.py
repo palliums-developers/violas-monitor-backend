@@ -1,14 +1,16 @@
 import json
-from .base import Base
+from db.base import Base
 from .token import TokenInfo
 from .trading_recode import TradingRecords
 from violas_client.banktypes.bytecode import CodeType as BankCodeType
 from violas_client.vlstypes.view import TransactionView
 from violas_client.oracle_client.bytecodes import CodeType as OracleCodType
+from util import set_default
 
 class BankAPI(Base):
 
     def __init__(self):
+        super().__init__()
         self.token_infos = dict()
         self.interval_lock = TradingRecords()
         self.interval_borrow = TradingRecords()
@@ -55,7 +57,7 @@ class BankAPI(Base):
         events = tx.get_bank_type_events(BankCodeType.REGISTER_LIBRA_TOKEN)
         if len(events) > 0:
             event = events[0].get_bank_event()
-            self.token_infos[event.currency_code] = TokenInfo(
+            self.token_infos[self.get_currency_key(event.currency_code)] = TokenInfo(
                 oracle_price=self.get_oracle_price(event.currency_code),
                 currency_code=event.currency_code,
                 collateral_factor=event.collateral_factor,
@@ -231,7 +233,7 @@ class BankAPI(Base):
         events = tx.get_bank_type_events(BankCodeType.UPDATE_RATE_MODEL)
         if len(events) > 0:
             event = events[0].get_bank_event()
-            token_info = self.token_infos[event.currency_code]
+            token_info = self.get_token_info(event.currency_code)
             token_info.base_rate = event.base_rate //(365*24*60)
             token_info.rate_multiplier = event.rate_multiplier // (365*24*60)
             token_info.rate_jump_multiplier = event.rate_jump_multiplier // (365*24*60)
@@ -241,8 +243,8 @@ class BankAPI(Base):
         if len(self.token_infos) == 0:
             return
         values = ''
-        for token in self.token_infos:
-            values += f'''('{token.currency_code}', '{json.dumps(token.__dict__)}'),'''
+        for currency, token in self.token_infos.items():
+            values += f'''('{currency}', '{json.dumps(token.__dict__, default=set_default)}'),'''
         values = values[:-1]
 
         sql = f'''
@@ -252,18 +254,18 @@ class BankAPI(Base):
         self.execute(sql)
 
     def update_interval_lock_to_db(self):
-        values = f"('interval_lock', '{json.dumps({self.interval_lock})}')"
+        values = f"('interval_lock', '{json.dumps(self.interval_lock.records)}')"
         sql = f'''
         INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-        SET value=exclude.value
+        SET value=excluded.value
         '''
         self.execute(sql)
 
     def update_interval_borrow_to_db(self):
-        values = f"('interval_borrow', '{json.dumps({self.interval_borrow})}')"
+        values = f"('interval_borrow', '{json.dumps(self.interval_borrow.records)}')"
         sql = f'''
         INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-        SET value=exclude.value
+        SET value=excluded.value
         '''
         self.execute(sql)
 
@@ -275,23 +277,23 @@ class BankAPI(Base):
     def update_from_db(self):
         sql = "SELECT * FROM monitor"
         values = self.query(sql)
-        for key, value in values.items():
+        for key, value in values:
             if key == "interval_lock":
-                self.interval_lock = value
+                self.interval_lock.records = value
             elif key == "interval_borrow":
-                self.interval_borrow = value
-            else:
+                self.interval_borrow.records = value
+            elif key.startswith("currency"):
                 self.token_infos[key] = value
 
     def get_sum_of_borrows(self):
         sum = 0
-        for token in self.token_infos:
+        for token in self.token_infos.values():
             sum += token.get_total_borrow()*token.price()
         return sum
 
     def get_sum_of_locks(self):
         sum = 0
-        for token in self.token_infos:
+        for token in self.token_infos.values():
             sum += token.get_total_lock()
         return sum
 
@@ -318,7 +320,12 @@ class BankAPI(Base):
             token_info.oracle_price = price
         else:
             token = TokenInfo(currency_code=currency_code, oracle_price=price)
-            self.token_infos[currency_code] = token
+            self.token_infos[self.get_currency_key(currency_code)] = token
 
     def get_token_info(self, currency_code):
-        return self.token_infos.get(currency_code)
+        return self.token_infos.get(self.get_currency_key(currency_code))
+
+    def get_currency_key(self, currency_code):
+        return "currency-" + currency_code
+
+bank_api = BankAPI()

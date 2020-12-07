@@ -1,3 +1,3 @@
-from bank.table_opt import drop_table as drop_bank_table
+from db.table_opt import drop_table
 
-drop_bank_table()
+drop_table()
