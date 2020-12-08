@@ -15,11 +15,11 @@ class TokenInfo():
         self.oracle_price = kwargs.get("oracle_price")
         self.price = kwargs.get("price", 0)
 
-        self.collateral_factor = kwargs.get("collateral_factor")
-        self.base_rate = kwargs.get("base_rate")
-        self.rate_multiplier = kwargs.get("rate_multiplier")
-        self.rate_jump_multiplier = kwargs.get("rate_jump_multiplier")
-        self.rate_kink = kwargs.get("rate_kink")
+        self.collateral_factor = kwargs.get("collateral_factor", 0)
+        self.base_rate = kwargs.get("base_rate", 0)
+        self.rate_multiplier = kwargs.get("rate_multiplier",0)
+        self.rate_jump_multiplier = kwargs.get("rate_jump_multiplier", 0)
+        self.rate_kink = kwargs.get("rate_kink", 0)
         self.last_minute = kwargs.get("last_minute", 0) // 60
 
         # resource struct T
