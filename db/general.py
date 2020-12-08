@@ -22,6 +22,6 @@ class GeneralApi(Base):
 general_api = GeneralApi()
 
 if __name__ == "__main__":
-    general_api.set_key("key", {"key": "value"})
+    general_api.set_key("key", {111: "value"})
     print(general_api.get_key("key"))
 
