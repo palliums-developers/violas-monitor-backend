@@ -19,7 +19,7 @@ def index():
 
 scan_thread.setDaemon(True)
 scan_thread.start()
-app.run(host="0.0.0.0", port=9000)
+app.run(host="0.0.0.0", port=8888)
 
 
 
