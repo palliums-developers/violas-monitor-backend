@@ -29,7 +29,7 @@ class ScanThread(Thread):
         height = self.height
         while True:
             try:
-                txs = self.client.get_transactions(height, 500)
+                txs = self.client.get_transactions(self.height, 500)
                 for tx in txs:
                     if tx.get_code_type() != CodeType.BLOCK_METADATA:
                         bank_api.add_tx(tx)
