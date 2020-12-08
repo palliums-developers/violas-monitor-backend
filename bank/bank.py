@@ -244,7 +244,7 @@ class BankAPI(Base):
             return
         values = ''
         for currency, token in self.token_infos.items():
-            values += f'''('{currency}', '{json.dumps(token.__dict__, default=set_default)}'),'''
+            values += f'''('{currency}', '{json.dumps(token, default=set_default)}'),'''
         values = values[:-1]
 
         sql = f'''

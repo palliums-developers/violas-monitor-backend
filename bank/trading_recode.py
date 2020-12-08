@@ -16,6 +16,3 @@ class TradingRecords():
     def get_record(self, t):
         start_time = t // self.ONE_DAY
         return self.records.get(start_time, 0)
-
-    def __repr__(self):
-        return str(self.__dict__)

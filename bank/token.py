@@ -27,13 +27,17 @@ class TokenInfo():
 
         #24小时的存款总额
         self.interval_lock = TradingRecords()
+        self.interval_lock.records = kwargs.get("interval_lock") or dict()
+
         self.interval_borrow = TradingRecords()
+        self.interval_borrow.records = kwargs.get("interval_borrow") or dict()
 
         #24小时产生的利息(借款的存款的一样)
         self.interval_borrow_interest = InterestRecords()
+        self.interval_borrow_interest.records = kwargs.get("interval_borrow_interest") or dict()
 
-        self.lock_accounts = set(list())
-        self.borrow_accounts = set(list())
+        self.lock_accounts = set(kwargs.get("lock_accounts", list()))
+        self.borrow_accounts = set(kwargs.get("borrow_accounts", list()))
 
     def get_total_lock(self):
         return self.total_supply * self.get_exchange_rate()
@@ -59,9 +63,10 @@ class TokenInfo():
             "contract_value": self.contract_value,
             "interval_lock": self.interval_lock.records,
             "interval_borrow": self.interval_borrow.records,
-            "interval_borrow_interest": self.interval_borrow_interest.get_interest(self.total_borrows, int(time.time())),
+            "interval_borrow_interest": self.interval_borrow_interest.records,
             "lock_accounts": list(self.lock_accounts),
             "borrow_accounts": list(self.borrow_accounts),
+            "interest": self.interval_borrow_interest.get_interest(self.get_forecast(int(time.time())).total_borrows, int(time.time())),
         }
         return ret
 
