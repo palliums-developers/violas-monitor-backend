@@ -1,4 +1,5 @@
 import copy
+import time
 from .trading_recode import TradingRecords
 from .interest_recode import InterestRecords
 from .util import new_mantissa, mantissa_mul, mantissa_div, safe_sub
@@ -58,7 +59,7 @@ class TokenInfo():
             "contract_value": self.contract_value,
             "interval_lock": self.interval_lock.records,
             "interval_borrow": self.interval_borrow.records,
-            "interval_borrow_interest": self.interval_borrow_interest.records,
+            "interval_borrow_interest": self.interval_borrow_interest.get_interest(self.total_borrows, int(time.time())),
             "lock_accounts": list(self.lock_accounts),
             "borrow_accounts": list(self.borrow_accounts),
         }

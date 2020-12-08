@@ -54,7 +54,6 @@ class BankAPI(Base):
         self.accounts.add(tx.get_sender())
 
     def add_register_libra_token(self, tx):
-        print("add_register_libra_token", tx.get_version())
         events = tx.get_bank_type_events(BankCodeType.REGISTER_LIBRA_TOKEN)
         if len(events) > 0:
             event = events[0].get_bank_event()
