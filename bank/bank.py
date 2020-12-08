@@ -283,7 +283,7 @@ class BankAPI(Base):
             elif key == "interval_borrow":
                 self.interval_borrow.records = value
             elif key.startswith("currency"):
-                self.token_infos[key] = value
+                self.token_infos[key] = TokenInfo.from_json(value)
 
     def get_sum_of_borrows(self):
         sum = 0

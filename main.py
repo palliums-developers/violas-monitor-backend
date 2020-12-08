@@ -17,7 +17,6 @@ scan_thread = ScanThread()
 def index():
     return scan_thread.to_json()
 
-
 scan_thread.setDaemon(True)
 scan_thread.start()
 app.run(host="0.0.0.0", port=9000)

@@ -12,6 +12,7 @@ from util import set_default
 class ScanThread(Thread):
 
     KEEP_HEIGHT = 10000
+
     def __init__(self):
         super().__init__()
         self.height = 0

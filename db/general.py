@@ -15,7 +15,9 @@ class GeneralApi(Base):
 
     def get_key(self, key):
         sql = f"SELECT * FROM monitor WHERE key='{key}'"
-        return self.query(sql)[0][1]
+        value = self.query(sql)
+        if len(value):
+            return self.query(sql)[0][1]
 
 general_api = GeneralApi()
 
