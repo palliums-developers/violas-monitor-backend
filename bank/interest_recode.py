@@ -9,7 +9,7 @@ class InterestRecords():
         value = self.records.get(start_time)
         if value is None:
             tb = self.get_start_total_borrow(total_borrow, borrow_rate, int(start_time)*self.ONE_DAY, t)
-            self.records = {start_time: (tb, 0)}
+            self.records = {start_time: [tb, 0]}
 
     def add_borrow(self, amount, t):
         start_time = str(t // self.ONE_DAY)
