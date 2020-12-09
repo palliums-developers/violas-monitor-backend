@@ -20,7 +20,7 @@ class TokenInfo():
         self.rate_multiplier = kwargs.get("rate_multiplier",0)
         self.rate_jump_multiplier = kwargs.get("rate_jump_multiplier", 0)
         self.rate_kink = kwargs.get("rate_kink", 0)
-        self.last_minute = kwargs.get("last_minute", 0) // 60
+        self.last_minute = kwargs.get("last_minute", 0)
 
         # resource struct T
         self.contract_value = kwargs.get("contract_value", 0)
