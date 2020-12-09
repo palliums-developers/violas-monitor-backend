@@ -7,7 +7,9 @@ class InterestRecords():
     def update_total_borrow(self, total_borrow, t):
         start_time = str(t // self.ONE_DAY)
         value = self.records.get(start_time)
+        print("update_total_borrow", value)
         if value is None:
+            print("set", {start_time: total_borrow})
             self.records = {start_time: total_borrow}
 
     def add_borrow(self, amount, t):
@@ -26,8 +28,6 @@ class InterestRecords():
     def get_interest(self, total_borrow, t):
         start_time = str(t // self.ONE_DAY)
         value = self.records.get(start_time)
-        print(self.records)
-        print(total_borrow, value)
         if value is None:
             return 0
         return total_borrow - value
