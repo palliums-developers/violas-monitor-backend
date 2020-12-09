@@ -69,7 +69,7 @@ class TokenInfo():
         }
         borrow_rate = self.get_borrow_rate()
         cur_time = int(time.time())
-        ret["interest"] = self.interval_borrow_interest.get_interest(self.get_forecast(cur_time).total_borrows,
+        ret["interest"] = self.interval_borrow_interest.get_interest(self.get_forecast(cur_time//60).total_borrows,
                                                                       borrow_rate, int(time.time())),
         return ret
 
