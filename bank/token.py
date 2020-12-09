@@ -66,8 +66,11 @@ class TokenInfo():
             "interval_borrow_interest": self.interval_borrow_interest.records,
             "lock_accounts": list(self.lock_accounts),
             "borrow_accounts": list(self.borrow_accounts),
-            "interest": self.interval_borrow_interest.get_interest(self.get_forecast(int(time.time())).total_borrows, int(time.time())),
         }
+        borrow_rate = self.get_borrow_rate()
+        cur_time = int(time.time())
+        ret["interest"] = self.interval_borrow_interest.get_interest(self.get_forecast(cur_time).total_borrows,
+                                                                      borrow_rate, int(time.time())),
         return ret
 
     @classmethod
@@ -88,7 +91,7 @@ class TokenInfo():
         self.total_reserves = self.total_reserves +mantissa_mul(interest_accumulated, reserve_factor)
         self.borrow_index = self.borrow_index + mantissa_mul(self.borrow_index, borrow_rate)
 
-        self.interval_borrow_interest.update_total_borrow(self.total_borrows, timestamp)
+        self.interval_borrow_interest.update_total_borrow(self.total_borrows, borrow_rate, timestamp)
         return self
 
     def get_forecast(self, time_minute):

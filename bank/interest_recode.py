@@ -4,18 +4,16 @@ class InterestRecords():
     def __init__(self):
         self.records = {}
 
-    def update_total_borrow(self, total_borrow, t):
+    def update_total_borrow(self, total_borrow, borrow_rate, t):
         start_time = str(t // self.ONE_DAY)
         value = self.records.get(start_time)
-        print("update_total_borrow", value)
         if value is None:
-            print("set", {start_time: total_borrow})
-            self.records = {start_time: total_borrow}
+            tb = self.get_start_total_borrow(total_borrow, borrow_rate, int(start_time)*self.ONE_DAY, t)
+            self.records = {start_time: tb}
 
     def add_borrow(self, amount, t):
         start_time = str(t // self.ONE_DAY)
         value = self.records.get(start_time)
-        print("add borrow", value, amount)
         assert value is not None
         self.records[start_time] = value + amount
 
@@ -25,10 +23,13 @@ class InterestRecords():
         assert value is not None
         self.records[start_time] = value - amount
 
-    def get_interest(self, total_borrow, t):
+    def get_interest(self, total_borrow, borrow_rate, t):
+        self.update_total_borrow(total_borrow, borrow_rate, t)
         start_time = str(t // self.ONE_DAY)
         value = self.records.get(start_time)
-        if value is None:
-            return 0
         return total_borrow - value
+
+    @staticmethod
+    def get_start_total_borrow(end_total_borrow, borrow_rate, start_time, end_time):
+        return end_total_borrow - int((end_time-start_time) / 60) * borrow_rate
 
