@@ -145,7 +145,7 @@ class TokenInfo():
         tokens = mantissa_div(amount, self.exchange_rate)
         self.total_supply += tokens
 
-        tx_time = tx.get_expiration_time()
+        tx_time = tx.get_bank_timestamp()
         self.interval_lock.increase_records(amount, tx_time)
         self.lock_accounts.add(tx.get_sender())
 
@@ -154,7 +154,7 @@ class TokenInfo():
         self.total_borrows += amount
         self.contract_value -= amount
 
-        tx_time = tx.get_expiration_time()
+        tx_time = tx.get_bank_timestamp()
         self.interval_borrow.increase_records(amount, tx_time)
         self.borrow_accounts.add(tx.get_sender())
         self.interval_borrow_interest.add_borrow(amount, tx_time)
@@ -165,7 +165,7 @@ class TokenInfo():
         self.total_supply = safe_sub(self.total_supply, tokens)
         self.contract_value -= amount
 
-        tx_time = tx.get_expiration_time()
+        tx_time = tx.get_bank_timestamp()
         self.interval_lock.reduce_records(amount, tx_time)
 
     def add_repay_borrow(self, tx):
@@ -173,7 +173,7 @@ class TokenInfo():
         self.total_borrows = safe_sub(self.total_borrows, amount)
         self.contract_value += amount
 
-        tx_time = tx.get_expiration_time()
+        tx_time = tx.get_bank_timestamp()
         self.interval_borrow.reduce_records(amount, tx_time)
 
     def add_liquidae_borrow(self, tx):
