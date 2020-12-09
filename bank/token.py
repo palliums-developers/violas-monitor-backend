@@ -78,7 +78,6 @@ class TokenInfo():
         borrow_rate = self.get_borrow_rate()
         minute = int(timestamp) // 60
         cnt = safe_sub(minute, self.last_minute)
-        print("mmmmmmm", minute, self.last_minute)
         if cnt <= 0:
             return self
         borrow_rate = borrow_rate *cnt

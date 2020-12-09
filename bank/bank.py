@@ -65,7 +65,7 @@ class BankAPI(Base):
                 rate_multiplier=event.rate_multiplier//(365*24*60),
                 rate_jump_multiplier=event.rate_jump_multiplier//(365*24*60),
                 rate_kink=event.rate_kink,
-                last_minute=events[0].get_timestamp())
+                last_minute=events[0].get_timestamp()//60)
 
     def add_borrow(self, tx):
         '''
