@@ -24,7 +24,7 @@ class InterestRecords():
         value = self.records.get(start_time)
         if value is None:
             if len(self.records):
-                key = self.records.keys()[0]
+                key = list(self.records.keys())[0]
                 if int(key) > int(start_time):
                     return None
                 start_amount = self.get_start_total_borrow(total_borrow, borrow_rate, int(start_time)*self.ONE_DAY, t)
