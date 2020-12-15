@@ -1,6 +1,7 @@
 import json
 from flask import Flask
 from scan_thread import ScanThread
+from check_thread import CheckThread
 from bank.bank import bank_api
 from violas_client import Client
 
@@ -17,9 +18,16 @@ scan_thread = ScanThread()
 def index():
     return scan_thread.to_json()
 
-scan_thread.setDaemon(True)
-scan_thread.start()
-app.run(host="0.0.0.0", port=8888)
+
+if __name__ == "__main__":
+    scan_thread.setDaemon(True)
+    scan_thread.start()
+    while True:
+        if scan_thread.status == scan_thread.UP_TO_DATE:
+            check_thread = CheckThread()
+            check_thread.run()
+            break
+    app.run(host="0.0.0.0", port=8888)
 
 
 

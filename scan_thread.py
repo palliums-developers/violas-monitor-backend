@@ -12,11 +12,14 @@ from util import set_default
 class ScanThread(Thread):
 
     KEEP_HEIGHT = 10000
+    BACKWARD = 0
+    UP_TO_DATE = 1
 
     def __init__(self):
         super().__init__()
         self.height = 0
         self.client = Client.new(URL)
+        self.status = self.BACKWARD
 
     def to_json(self):
         ret = json.dumps(bank_api, default=set_default)
@@ -38,6 +41,8 @@ class ScanThread(Thread):
                     height = self.height
                     bank_api.update_to_db()
                     general_api.set_key("height", self.height)
+                if self.status == self.BACKWARD and len(txs) < 500:
+                    self.status = self.UP_TO_DATE
             except urllib3.exceptions.ReadTimeoutError as e:
                 print("timeout")
                 time.sleep(0.5)
