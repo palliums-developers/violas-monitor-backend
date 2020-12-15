@@ -1,7 +1,7 @@
 HOST="47.93.114.230"
-PORT="5432"
+PORT="5007"
 USER="postgres"
-PASSWORD="123456"
+PASSWORD="monitor-postgres"
 DATABASE="postgres"
 
 dsn = f"postgres://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
