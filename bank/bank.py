@@ -137,7 +137,7 @@ class BankAPI(Base):
         amount = tx.get_amount()
         currency_code = tx.get_currency_code()
         price = self.get_price(currency_code)
-        self.interval_lock.reduce_records(amount * price, timestamps)
+        # self.interval_lock.reduce_records(amount * price, timestamps)
         return ret
 
     def add_repay_borrow(self, tx):
@@ -189,7 +189,7 @@ class BankAPI(Base):
         amount = tx.get_amount()
         currency_code = tx.get_collateral_currency()
         price = self.get_price(currency_code)
-        self.interval_borrow.reduce_records(amount * price, timestamps)
+        # self.interval_borrow.reduce_records(amount * price, timestamps)
 
         return ret
 

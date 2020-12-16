@@ -166,7 +166,7 @@ class TokenInfo():
         self.contract_value -= amount
 
         tx_time = tx.get_bank_timestamp()
-        self.interval_lock.reduce_records(amount, tx_time)
+        # self.interval_lock.reduce_records(amount, tx_time)
 
     def add_repay_borrow(self, tx):
         amount = tx.get_amount()
@@ -174,7 +174,7 @@ class TokenInfo():
         self.contract_value += amount
 
         tx_time = tx.get_bank_timestamp()
-        self.interval_borrow.reduce_records(amount, tx_time)
+        # self.interval_borrow.reduce_records(amount, tx_time)
 
     def add_liquidate_borrow(self, tx):
         self.add_repay_borrow(tx)
