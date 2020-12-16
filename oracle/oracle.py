@@ -1,6 +1,6 @@
 import json
 from db.base import Base
-from .price_recode import PriceRecodes
+from .price_recode import PriceRecords
 from violas_client.oracle_client.bytecodes import CodeType
 
 class OracleAPI(Base):
@@ -27,7 +27,7 @@ class OracleAPI(Base):
         key = self.get_key(currency_code)
         price_codes = self.price_recodes.get(key)
         if price_codes is None:
-            price_codes = PriceRecodes()
+            price_codes = PriceRecords()
         price_codes.set_price(price, t)
         self.price_recodes[currency_code] = price_codes
 
@@ -49,7 +49,7 @@ class OracleAPI(Base):
         values = self.query(sql)
         for key, value in values:
             if key.startswith("oracle"):
-                self.price_recodes[key] = PriceRecodes.from_json(value)
+                self.price_recodes[key] = PriceRecords.from_json(value)
 
     def get_key(self, currency_code):
         return "oracle-" + currency_code
