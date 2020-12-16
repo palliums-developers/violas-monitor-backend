@@ -176,7 +176,7 @@ class TokenInfo():
         tx_time = tx.get_bank_timestamp()
         self.interval_borrow.reduce_records(amount, tx_time)
 
-    def add_liquidae_borrow(self, tx):
+    def add_liquidate_borrow(self, tx):
         self.add_repay_borrow(tx)
 
 

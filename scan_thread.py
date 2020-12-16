@@ -41,6 +41,7 @@ class ScanThread(Thread):
                     height = self.height
                     bank_api.update_to_db()
                     general_api.set_key("height", self.height)
+                print(self.height)
                 if self.status == self.BACKWARD and len(txs) < 500:
                     self.status = self.UP_TO_DATE
             except urllib3.exceptions.ReadTimeoutError as e:

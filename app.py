@@ -26,7 +26,7 @@ if __name__ == "__main__":
         if scan_thread.status == scan_thread.UP_TO_DATE:
             check_thread = CheckThread()
             check_thread.setDaemon(True)
-            check_thread.run()
+            check_thread.start()
             break
         time.sleep(1)
     app.run(host="0.0.0.0", port=8888)
