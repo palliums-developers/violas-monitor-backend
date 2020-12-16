@@ -1,4 +1,4 @@
-import json
+import time
 from flask import Flask
 from scan_thread import ScanThread
 from check_thread import CheckThread
@@ -28,6 +28,7 @@ if __name__ == "__main__":
             check_thread.setDaemon(True)
             check_thread.run()
             break
+        time.sleep(1)
     app.run(host="0.0.0.0", port=8888)
 
 
