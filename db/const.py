@@ -1,4 +1,4 @@
-HOST="47.93.114.230"
+HOST="127.0.0.1"
 PORT="5007"
 USER="postgres"
 PASSWORD="monitor-postgres"
