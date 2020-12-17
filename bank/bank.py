@@ -161,7 +161,7 @@ class BankAPI(Base):
         amount = tx.get_amount()
         currency_code = tx.get_currency_code()
         price = self.get_price(currency_code)
-        self.interval_borrow.increase_records(amount * price, timestamps)
+        # self.interval_borrow.reduce_records(amount * price, timestamps)
 
         return ret
 
