@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from dataclasses import dataclass
+import json
 
 @dataclass
-class Test:
-    v1: list
+class Test():
+    value : list = ()
 
+test= Test([])
+print(json.dumps(test.__dict__))
 
-
-test = Test()
-print(test.v1)
 

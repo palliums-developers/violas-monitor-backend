@@ -4,6 +4,7 @@ from .price_recode import PriceRecords
 from violas_client.oracle_client.bytecodes import CodeType
 
 class OracleAPI(Base):
+    PREFIX = "oracle_"
     def __init__(self):
         super().__init__()
         self.price_recodes = {}
@@ -24,34 +25,25 @@ class OracleAPI(Base):
             return self.set_price(currency_code, price, t)
 
     def set_price(self, currency_code, price, t):
-        key = self.get_key(currency_code)
-        price_codes = self.price_recodes.get(key)
+        price_codes = self.price_recodes.get(currency_code)
         if price_codes is None:
             price_codes = PriceRecords()
         price_codes.set_price(price, t)
         self.price_recodes[currency_code] = price_codes
 
     def get_price(self, currency_code):
-        key = self.get_key(currency_code)
-        return self.price_recodes.get(key)
+        return self.price_recodes.get(currency_code)
 
     def update_to_db(self):
+        value = dict()
         for currency, value in self.price_recodes.items():
-            values = f"('oracle-{currency}', '{json.dumps(value.records)}')"
-            sql = f'''
-            INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-            SET value=excluded.value
-            '''
-            self.execute(sql)
+            value[currency] = value
+        self.keep("currency", value)
 
     def update_from_db(self):
-        sql = "SELECT * FROM monitor"
-        values = self.query(sql)
-        for key, value in values:
-            if key.startswith("oracle"):
-                self.price_recodes[key] = PriceRecords.from_json(value)
+        value = self.get("currency", {})
+        for currency, recode in value.items():
+            self.price_recodes[currency] = PriceRecords.from_json(recode)
 
-    def get_key(self, currency_code):
-        return "oracle-" + currency_code
 
 oracle_api = OracleAPI()

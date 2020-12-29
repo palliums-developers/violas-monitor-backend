@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from violas_client.extypes.bytecode import CodeType
 
+import json
 from db.base import Base
 
 
@@ -23,12 +24,12 @@ class PoolInfo:
 
 @dataclass
 class RewardPools:
-    start_time: int
-    end_time: int
-    last_reward_time: int
-    total_reward_balance: int
-    total_alloc_point: int
-    pool_infos: list
+    start_time: int = 0
+    end_time: int = 0
+    last_reward_time: int = 0
+    total_reward_balance: int = 0
+    total_alloc_point: int = 0
+    pool_infos: list = ()
 
 @dataclass
 class Token:
@@ -42,7 +43,11 @@ class Reserve:
     coinb: Token
 
 class ExchangeAPI(Base):
+    PREFIX = "swap_"
+
     def __init__(self):
+        super().__init__()
+
         # {currency_code: price}
         self.oracle_prices = dict()
         # 手续费{pair_name: Volumes}
@@ -51,6 +56,8 @@ class ExchangeAPI(Base):
         self.currency_trading_recodes = dict()
         # 交易量{pair_name: Volumes}
         self.pair_trading_recodes = dict()
+        #账户的token {addr: [Token]}
+        self.account_tokens = dict()
 
     def add_tx(self, tx):
         code_type = tx.get_code_type()
@@ -68,6 +75,7 @@ class ExchangeAPI(Base):
             pass
 
     def add_initialize(self, tx):
+
         t = tx.get_swap_timestamp()
         self.reward_pool = RewardPools(t, t, t, 0, 0, list())
         self.reserves = list()
@@ -75,13 +83,45 @@ class ExchangeAPI(Base):
         self.factor1 = 9997
         self.factor2 = 10000
 
+    def update_to_db(self):
+        self.keep("reward_pool", self.reward_pool)
+        self.keep("reserves", self.reserves)
+        self.keep("registered_currencies", self.registered_currencies)
+        self.keep("factor", [self.factor1, self.factor2])
+
+        self.keep("oracle_prices", self.oracle_prices)
+        self.keep("fees", self.fees)
+        self.keep("currency_trading_recodes", self.currency_trading_recodes)
+        self.keep("pair_trading_recodes", self.pair_trading_recodes)
+        self.keep("account_tokens", self.account_tokens)
+
+    def update_from_db(self):
+        value = self.get("reward_pool", {})
+        self.reward_pool = RewardPools(**value)
+        value = self.get("reserves", {})
+        self.reserves = [Reserve(**reserve) for reserve in value]
+        value = self.get("registered_currencies", [])
+        self.registered_currencies = value
+        value = self.get("factor", [0, 0])
+        self.factor1, self.factor2 = value[0], value[1]
+        value = self.get("oracle_price", {})
+        self.oracle_prices = value
+        value = self.get("fees", {})
+        self.fees = value
+        value = self.get("currency_trading_recodes", {})
+        self.currency_trading_recodes = value
+        value = self.get("pair_trading_recodes", {})
+        self.pair_trading_recodes = value
+        value = self.get("account_tokens", [])
+        self.account_tokens = value
+
     def add_currency(self, tx):
         currency = tx.get_currency_code()
         self.registered_currencies.append(currency)
 
     def add_swap(self, tx):
         script = tx.get_script()
-        args = script.get_args()
+        args = script.arguments
         path = args[3]
         length = len(path)
         amounts = list()
@@ -127,10 +167,39 @@ class ExchangeAPI(Base):
 
 
     def add_liquidity(self, tx):
-        pass
+        script = tx.get_script()
+        type_args = script.type_arguments
+        coina, coinb = type_args[0], type_args[1]
+        args = script.arguments
+        amounta_desired, amountb_desired, amounta_min, amountb_min = args
+        ida, idb = self.get_pair_indexs(coina, coinb)
+        reserve = self.get_reserve_internal(ida, idb)
+        total_supply, reservea, reserveb = reserve.liquidity_total_supply, reserve.coina.value, reserve.coinb.value
+        total_supply, amounta, amountb = self.mint(tx.get_sender(), ida, idb, amounta_desired, amountb_desired)
+        reserve.liquidity_total_supply = total_supply
+        reserve.coina.value = reservea + amounta
+        reserve.coinb.value = reserve + amountb
 
     def remove_liquidity(self, tx):
-        pass
+        sender = tx.get_sender()
+        script = tx.get_script()
+        type_args = script.type_arguments
+        coina, coinb = type_args[0], type_args[1]
+        args = script.arguments
+        liquidity, amounta_min, amountb_min = args
+        ida, idb = self.get_pair_indexs(coina, coinb)
+        reserve = self.get_reserve_internal(ida, idb)
+        total_supply, reservea, reserveb = reserve.liquidity_total_supply, reserve.coina.value, reserve.coinb.value
+        id = ida << 32 + idb
+        token = self.get_token(id, sender)
+        amounta = int(liquidity * reservea / total_supply)
+        amountb = int(liquidity * reserveb / total_supply)
+        reserve.liquidity_total_supply = total_supply - liquidity
+        reserve.coina.value = reservea - amounta
+        reserve.coinb.value = reserveb - amountb
+        token.value -= liquidity
+        self.update_pool()
+        self.update_user_reward_info(sender, id, token.value)
 
     def withdraw_mine_reward(self, tx):
         pass
@@ -140,6 +209,14 @@ class ExchangeAPI(Base):
 
     def get_coin_name(self, id):
         return self.registered_currencies[id]
+
+    def get_coin_id(self, coin_name):
+        for index, currency in enumerate(self.registered_currencies):
+            if currency == coin_name:
+                return index
+
+    def get_pair_indexs(self, coina, coinb):
+        return self.get_coin_id(coina), self.get_coin_id(coinb)
 
     def get_reserve_internal(self, ida, idb):
         for reserve in self.reserves:
@@ -170,5 +247,63 @@ class ExchangeAPI(Base):
         amount_out = numerator // denominator
         return amount_out
 
+    def get_token(self, addr, id):
+        tokens = self.account_tokens.get(addr, [])
+        for token in tokens:
+            if token.index == id:
+                return token
+        t = Token(id, 0)
+        tokens.append(t)
+        return t
+
     def get_fee(self, amount_in, reserve_in, reserve_out):
         return self.get_output_amount_without_fee(amount_in, reserve_in, reserve_out) - self.get_output_amount(amount_in, reserve_in, reserve_out)
+
+    def quote(self, amounta, reservea, reserveb):
+        return amounta * reserveb / reservea
+
+    def sqrt(self, a, b):
+        y = a * b
+        z = 1
+        if y > 3:
+            z = y
+            x = int(y // 2 + 1)
+            while x < z:
+                z = x
+                x =(y // x + x) // 2
+        elif y != 0:
+            z = 1
+        return int(z)
+
+    def get_mint_liquidity(self, amounta_desired, amountb_desired, amounta_min, amountb_min, reservea, reserveb, total_supply):
+        if reservea == 0 and reserveb == 0:
+           amounta, amountb = amounta_desired, amountb_desired
+        else:
+            amountb_optimal = self.quote(amounta_desired, reservea, reserveb)
+            if amountb_optimal <= amountb_desired:
+                amounta, amountb = amounta_desired, amountb_optimal
+            else:
+                amounta_optimal = self.quote(amountb_desired, reserveb, reservea)
+                amounta, amountb = amounta_optimal, amountb_desired
+        if total_supply == 0:
+            liquidity = self.sqrt(amounta, amountb)
+        else:
+            liquidity = min(amounta * total_supply / reservea, amountb * total_supply / reserveb)
+        return liquidity, amounta, amountb
+
+    def update_pool(self):
+        pass
+
+    def update_user_reward_info(self, addr, id, new_liquidity):
+        pass
+
+    def mint(self, addr, ida, idb, amounta_desired, amountb_desired, amounta_min, amountb_min, reservea, reserveb, total_supply):
+        id = ida << 32 + idb
+        token = self.get_token(addr, id)
+        liquidity, amounta, amountb = self.get_mint_liquidity(amounta_desired, amountb_desired, amounta_min, amountb_min, reservea, reserveb, total_supply)
+        token.value += liquidity
+        self.update_pool()
+        self.update_user_reward_info(addr, id, token.value)
+        return total_supply + liquidity, amounta, amountb
+
+exchange_api = ExchangeAPI()

@@ -4,11 +4,13 @@ import urllib3
 from threading import Thread
 from bank.bank import bank_api
 from db.general import general_api
+from swap.exchange import exchange_api
+
 from violas_client import Client
 from violas_client.lbrtypes.bytecode import CodeType
 from const import URL
-from util import set_default
 from oracle.oracle import oracle_api
+from db.base import set_default
 
 class ScanThread(Thread):
 
@@ -44,12 +46,16 @@ class ScanThread(Thread):
                     if tx.get_code_type() != CodeType.BLOCK_METADATA:
                         bank_api.add_tx(tx)
                         oracle_api.add_tx(tx)
+                        exchange_api.add_tx(tx)
+
                 self.height += len(txs)
                 if self.height > height + self.KEEP_HEIGHT:
                     height = self.height
                     bank_api.update_to_db()
                     oracle_api.update_to_db()
-                    general_api.set_key("height", self.height)
+                    exchange_api.update_to_db()
+
+                    general_api.keep("height", self.height)
                 if self.status == self.BACKWARD and len(txs) < 500:
                     self.status = self.UP_TO_DATE
             except urllib3.exceptions.ReadTimeoutError as e:
@@ -61,5 +67,6 @@ class ScanThread(Thread):
     def init_from_db(self):
         bank_api.update_from_db()
         oracle_api.update_from_db()
-        height = general_api.get_key("height")
+        exchange_api.update_from_db()
+        height = general_api.get("height")
         self.height = height or 0

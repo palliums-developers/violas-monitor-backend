@@ -5,9 +5,9 @@ from .trading_recode import TradingRecords
 from violas_client.banktypes.bytecode import CodeType as BankCodeType
 from violas_client.vlstypes.view import TransactionView
 from violas_client.oracle_client.bytecodes import CodeType as OracleCodType
-from util import set_default
 
 class BankAPI(Base):
+    PREFIX = "bank_"
 
     def __init__(self):
         super().__init__()
@@ -240,53 +240,39 @@ class BankAPI(Base):
             token_info.rate_kink = event.rate_kink
 
     def update_token_to_db(self):
-        if len(self.token_infos) == 0:
-            return
-        values = ''
+        value = dict()
         for currency, token in self.token_infos.items():
-            values += f'''('{currency}', '{json.dumps(token, default=set_default)}'),'''
-        values = values[:-1]
-
-        sql = f'''
-        INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-        SET value=excluded.value;
-        '''
-        self.execute(sql)
+            value[currency] = token
+        self.keep("token_infos", value)
 
     def update_interval_lock_to_db(self):
-        values = f"('interval_lock', '{json.dumps(self.interval_lock.records)}')"
-        sql = f'''
-        INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-        SET value=excluded.value
-        '''
-        self.execute(sql)
+        return self.keep("interval_lock", self.interval_lock.records)
 
     def update_interval_borrow_to_db(self):
-        values = f"('interval_borrow', '{json.dumps(self.interval_borrow.records)}')"
-        sql = f'''
-        INSERT INTO monitor (key, value) VALUES {values} ON CONFLICT (key) DO UPDATE
-        SET value=excluded.value
-        '''
-        self.execute(sql)
+        return self.keep("interval_borrow", self.interval_borrow.records)
+
+    def update_accounts_to_db(self):
+        return self.keep("accounts", self.accounts)
 
     def update_to_db(self):
         self.update_token_to_db()
         self.update_interval_borrow_to_db()
         self.update_interval_lock_to_db()
+        self.update_accounts_to_db()
 
     def update_from_db(self):
-        sql = "SELECT * FROM monitor"
-        values = self.query(sql)
-        for key, value in values:
-            if key == "interval_lock":
-                self.interval_lock.records = value
-            elif key == "interval_borrow":
-                self.interval_borrow.records = value
-            elif key.startswith("currency"):
-                self.token_infos[key] = TokenInfo.from_json(value)
+        value = self.get("interval_lock", TradingRecords())
+        self.interval_lock.records = value
+        value = self.get("interval_borrow", TradingRecords())
+        self.interval_borrow.records = value
+        value = self.get("token_infos", {})
+        for currency, token in value.items():
+            self.token_infos[currency] = TokenInfo.from_json(token)
+        value = self.get("accounts", [])
+        self.accounts = set(value)
 
     def get_sum_of_borrows(self):
-        sum = 0
+        sum = 0x1
         for token in self.token_infos.values():
             sum += token.get_total_borrow()*token.price()
         return sum
